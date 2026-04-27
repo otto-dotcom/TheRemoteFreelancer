@@ -52,12 +52,18 @@ class RemoteOKBoard(JobBoard):
     def fetch_jobs(self, filters: Dict) -> List[Dict]:
         """Fetch jobs from RemoteOK."""
         try:
-            resp = requests.get(f'{self.base_url}/jobs/', timeout=10)
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+            }
+            resp = requests.get(f'{self.base_url}/jobs/', headers=headers, timeout=10)
             resp.raise_for_status()
             jobs = resp.json()
             return self._filter_jobs(jobs, filters)
         except requests.RequestException as e:
-            logger.error(f"Failed to fetch jobs: {e}")
+            logger.warning(f"RemoteOK fetch issue: {e}")
+            return []
+        except Exception as e:
+            logger.warning(f"RemoteOK processing error: {e}")
             return []
 
     def _filter_jobs(self, jobs: List[Dict], filters: Dict) -> List[Dict]:
@@ -141,8 +147,18 @@ class AutoApplier:
         """Initialize job board integrations."""
         boards = []
         for board_name, board_config in self.config.get('boards', {}).items():
+            if not board_config.get('enabled', False):
+                continue
+
             if board_name == 'remoteok':
                 boards.append(RemoteOKBoard(board_config))
+            elif board_name == 'weworkremotely':
+                logger.info(f"Board {board_name} integration not yet implemented")
+            elif board_name == 'angellist':
+                logger.info(f"Board {board_name} integration not yet implemented")
+            elif board_name == 'freelancer':
+                logger.info(f"Board {board_name} integration not yet implemented")
+
         return boards
 
     def run(self):
@@ -150,29 +166,55 @@ class AutoApplier:
         filters = self.config.get('filters', {})
         interval = self.config.get('check_interval_minutes', 60)
 
-        logger.info("Starting auto-apply automation")
+        logger.info(f"Starting auto-apply automation (check every {interval} minutes)")
+        logger.info(f"Max daily applications: {self.config.get('application_settings', {}).get('max_applications_per_day', 'unlimited')}")
 
+        iteration = 0
         try:
             while True:
+                iteration += 1
+                logger.info(f"[Iteration {iteration}] Starting job check...")
                 self._check_and_apply(filters)
-                logger.info(f"Next check in {interval} minutes")
+                logger.info(f"Sleeping for {interval} minutes until next check")
                 time.sleep(interval * 60)
         except KeyboardInterrupt:
-            logger.info("Automation stopped")
+            logger.info("Automation stopped by user")
+        except Exception as e:
+            logger.error(f"Fatal error: {e}", exc_info=True)
+            raise
 
     def _check_and_apply(self, filters: Dict):
         """Check for new jobs and apply."""
+        total_applied = 0
+        max_per_day = self.config.get('application_settings', {}).get('max_applications_per_day', 500)
+
         for board in self.boards:
-            logger.info(f"Checking {board.name}")
+            logger.info(f"Checking {board.name}...")
             jobs = board.fetch_jobs(filters)
 
+            if not jobs:
+                logger.info(f"  → No new jobs found on {board.name}")
+                continue
+
+            logger.info(f"  → Found {len(jobs)} potential matches")
+
             for job in jobs:
+                if total_applied >= max_per_day:
+                    logger.info(f"Reached daily limit ({max_per_day} applications)")
+                    break
+
                 job_id = job.get('id') or job.get('slug')
                 if job_id not in self.applied_jobs:
                     if board.apply(job_id):
                         self.applied_jobs.add(job_id)
                         self._save_applied_jobs()
-                        logger.info(f"Applied to: {job.get('title')} at {job.get('company')}")
+                        total_applied += 1
+                        title = job.get('title', 'Unknown')
+                        company = job.get('company', 'Unknown')
+                        logger.info(f"  ✓ Applied to: {title} at {company}")
+
+        if total_applied == 0:
+            logger.info(f"No new applications this cycle")
 
 
 def main():

@@ -1,0 +1,37 @@
+{
+  "boards": {
+    "remoteok": {
+      "api_url": "https://remoteok.io/api",
+      "enabled": true
+    }
+  },
+  "filters": {
+    "min_salary": 50000,
+    "max_salary": null,
+    "required_skills": [
+      "python",
+      "javascript",
+      "typescript"
+    ],
+    "job_types": [
+      "full-time",
+      "contract"
+    ],
+    "locations": [
+      "Anywhere",
+      "Remote"
+    ],
+    "exclude_keywords": [
+      "unpaid",
+      "equity-only"
+    ]
+  },
+  "application_settings": {
+    "auto_message": true,
+    "message_template": "Hi, I'm interested in this position. I have experience with your required tech stack.",
+    "max_applications_per_day": 20,
+    "apply_delay_seconds": 2
+  },
+  "check_interval_minutes": 1,
+  "log_level": "INFO"
+}
