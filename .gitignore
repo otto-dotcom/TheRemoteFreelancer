@@ -9,3 +9,9 @@ node_modules
 .netlify
 docs/.netlify
 docs/.jekyll-cache
+
+# Auto-apply automation
+applied_jobs.json
+config.local.json
+.env
+*.log
