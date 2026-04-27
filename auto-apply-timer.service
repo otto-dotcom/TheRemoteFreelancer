@@ -1,0 +1,19 @@
+[Unit]
+Description=Auto-apply job automation (max-load)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nobody
+WorkingDirectory=/opt/auto-apply
+ExecStartPre=/bin/bash -c 'cp /opt/auto-apply/config-max-load.json /opt/auto-apply/config.json'
+ExecStart=/usr/bin/python3 /opt/auto-apply/auto-apply.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+[Unit]
+Description=Start auto-apply job automation at scheduled time
+Requires=auto-apply-timer.service
+
+[Timer]
+# Start tomorrow at 12:00 PM (noon)
+# Edit this line if you want a different time
+OnCalendar=*-*-* 12:00:00
+
+# Accuracy: run within 1 minute of scheduled time
+AccuracySec=1min
+
+# Persist across reboots
+Persistent=true
+
+[Install]
+WantedBy=timers.target
