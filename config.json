@@ -32,6 +32,6 @@
     "max_applications_per_day": 20,
     "apply_delay_seconds": 2
   },
-  "check_interval_minutes": 60,
+  "check_interval_minutes": 1,
   "log_level": "INFO"
 }
